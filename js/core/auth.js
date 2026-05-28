@@ -188,5 +188,7 @@ export function initAuth() {
     if (s.key === 'lowStockThresh') window.lowStockThresh = parseInt(s.value) || 10;
     if (s.key === 'printMode') window.printMode = s.value || 'ask';
     if (s.key === 'rcptFooter') window.rcptFooter = s.value || 'Thank you for your purchase!';
+    // Make renderLogin available globally
+    window.renderLogin = renderLogin;
   });
 }
