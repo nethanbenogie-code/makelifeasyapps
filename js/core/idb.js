@@ -2,7 +2,7 @@
 import { LocalDB } from './localDB.js';
 
 const IDB_NAME = 'mlea_pos_v6';
-const IDB_VER = 2;          // increased version to force schema update if needed
+const IDB_VER = 3;  // increment version to force recreation
 const STORES = ['products', 'sales', 'users', 'settings', 'branches', 'activityLogs',
                 'suppliers', 'purchaseOrders', 'voidedSales', 'heldSales', 'returns', 'customers'];
 
@@ -14,7 +14,11 @@ export const IDB = {
       const req = indexedDB.open(IDB_NAME, IDB_VER);
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
-        // Create or upgrade object stores
+        // Delete old stores if they exist (optional, to clean corrupted ones)
+        // for (const store of STORES) {
+        //   if (db.objectStoreNames.contains(store)) db.deleteObjectStore(store);
+        // }
+        // Create all stores
         STORES.forEach(store => {
           if (!db.objectStoreNames.contains(store)) {
             db.createObjectStore(store, { keyPath: 'id' });
@@ -32,17 +36,13 @@ export const IDB = {
       const tx = _idb.transaction(store, 'readonly');
       const req = tx.objectStore(store).getAll();
       req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => resolve(LocalDB.getAll(store));
+      req.onerror = () => resolve([]);  // always return array
     });
   },
 
   async set(store, items) {
     if (!_idb) { LocalDB.set(store, items); return; }
-    // Filter out items that do NOT have an 'id' property
-    const validItems = items.filter(item => item && typeof item.id !== 'undefined');
-    if (validItems.length !== items.length) {
-      console.warn(`IDB.set: Skipping ${items.length - validItems.length} items without 'id' in store "${store}"`);
-    }
+    const validItems = (items || []).filter(item => item && typeof item.id !== 'undefined');
     return new Promise((resolve) => {
       const tx = _idb.transaction(store, 'readwrite');
       const os = tx.objectStore(store);
@@ -51,14 +51,12 @@ export const IDB = {
       tx.oncomplete = () => resolve();
       tx.onerror = (err) => {
         console.error('IDB.set error', err);
-        LocalDB.set(store, items); // fallback
         resolve();
       };
     });
   },
 
   async add(store, item) {
-    // Ensure item has an id
     if (!item.id) {
       const items = await this.getAll(store);
       item.id = items.reduce((max, i) => Math.max(max, i.id || 0), 0) + 1;
@@ -72,10 +70,7 @@ export const IDB = {
   },
 
   async update(store, item) {
-    if (!item.id) {
-      console.error('IDB.update called without id', item);
-      return;
-    }
+    if (!item.id) return;
     const items = await this.getAll(store);
     const idx = items.findIndex(i => i.id === item.id);
     if (idx !== -1) {
@@ -106,7 +101,6 @@ export const IDB = {
     let count = 0;
     for (const store of STORES) {
       const items = LocalDB.getAll(store);
-      // Ensure every item has an id (assign temporary id if missing)
       let maxId = items.reduce((max, i) => Math.max(max, i.id || 0), 0);
       const cleanItems = items.map(item => {
         if (!item.id) {
@@ -117,9 +111,11 @@ export const IDB = {
       });
       if (cleanItems.length) {
         await this.set(store, cleanItems);
-        // Also update LocalDB with fixed ids
         LocalDB.set(store, cleanItems);
         count += cleanItems.length;
+      } else if (!(await this.getAll(store)).length) {
+        // Ensure store has at least an empty array
+        await this.set(store, []);
       }
     }
     return count;
