@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MLEA POS v6 Modular</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Minimal extra to ensure visibility */
+    #mainContent { min-height: 200px; }
+    .debug { position: fixed; bottom: 0; left: 0; background: red; color: white; padding: 4px; z-index: 9999; }
+  </style>
+</head>
+<body>
+<div class="amb"></div>
+<div id="toastWrap" class="toast-wrap"></div>
+<div class="wrap">
+  <!-- LICENSE GATE -->
+  <div id="licenseGate">
+    <div class="lic-card">
+      <div class="lic-logo">🔐</div>
+      <h2>MLEA POS</h2>
+      <p>Enter license key</p>
+      <input class="lic-input" type="text" id="licenseInput" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19">
+      <button class="btn bp" id="activateBtn">Activate</button>
+      <div class="lic-status" id="licStatus"></div>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="loginScreen" style="display:none">
+    <div class="log-card">
+      <div class="log-logo"><div class="log-icon">🏪</div><h1>MLEA POS</h1><p>Modular v6</p></div>
+      <div class="sec-label">Select User</div>
+      <div class="usr-grid" id="usrGrid"></div>
+      <div class="lockout-bar" id="lockoutBar"></div>
+      <div class="sec-label">Enter PIN</div>
+      <div class="pin-dots" id="pinDots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+      <div class="err-msg" id="errMsg"></div>
+      <div class="pin-grid">
+        <button class="pbn" data-pin="1">1</button><button class="pbn" data-pin="2">2</button><button class="pbn" data-pin="3">3</button>
+        <button class="pbn" data-pin="4">4</button><button class="pbn" data-pin="5">5</button><button class="pbn" data-pin="6">6</button>
+        <button class="pbn" data-pin="7">7</button><button class="pbn" data-pin="8">8</button><button class="pbn" data-pin="9">9</button>
+        <button class="pbn clr">Clear</button><button class="pbn" data-pin="0">0</button><button class="pbn sub">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp" style="display:none">
+    <div class="sb-ov" id="sbOv"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="sb-hdr"><div class="sb-logo">🏪</div><div class="sb-hdr-txt"><h3>MLEA POS</h3><p id="sbSub">v6</p></div></div>
+      <div class="sb-nav" id="sbNav"></div>
+      <div class="sb-ft"><button class="sb-ft-btn" id="logoutBtn">🚪 Sign Out</button></div>
+    </div>
+    <div class="hdr">
+      <button class="hambg" id="menuBtn">☰</button>
+      <span class="hdr-logo" id="hdrTitle">MLEA POS</span>
+      <div class="hdr-r"><span id="hdrBranch"></span><button class="hbtn" id="logoutBtn2">Sign Out</button></div>
+    </div>
+    <div id="mainContent">Loading...</div>
+  </div>
+  <div class="sync-bar" id="syncBar"><span><span class="sdot local" id="syncDot"></span><span id="syncLabel">Local</span></span><span id="syncMsg">Ready</span></div>
+</div>
+<div class="modal" id="modal"><div class="modal-box" id="modalBox"></div></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
