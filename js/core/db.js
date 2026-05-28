@@ -59,7 +59,7 @@ export async function initDB() {
     console.error('IDB init failed, falling back to localStorage', err);
     storageMode = 'local';
   }
-  // Ensure settings store has at least an empty array in localStorage
+  // Ensure settings store exists in localStorage
   if (!localStorage.getItem('mlea_settings')) {
     localStorage.setItem('mlea_settings', '[]');
   }
