@@ -3,18 +3,15 @@ const STORES = ['products', 'sales', 'users', 'settings', 'branches', 'activityL
                 'suppliers', 'purchaseOrders', 'voidedSales', 'heldSales', 'returns', 'customers'];
 
 export const LocalDB = {
-  // Ensure all stores exist and seed default data
   init() {
     STORES.forEach(s => {
       if (!localStorage.getItem('mlea_' + s)) {
         localStorage.setItem('mlea_' + s, '[]');
       }
     });
-
-    // Seed default data if missing
+    // Seed default admin user if none
     const users = this.getAll('users');
     if (!users || users.length === 0) {
-      console.log('Seeding default admin user...');
       this.add('users', {
         name: 'Admin',
         role: 'admin',
@@ -23,16 +20,12 @@ export const LocalDB = {
         branchId: null
       });
     }
-
+    // Seed default branch if none
     const branches = this.getAll('branches');
     if (!branches || branches.length === 0) {
-      this.add('branches', {
-        name: 'Main Branch',
-        address: 'Head Office',
-        phone: '555-0000'
-      });
+      this.add('branches', { name: 'Main Branch', address: 'Head Office', phone: '555-0000' });
     }
-
+    // Seed sample product if none
     const products = this.getAll('products');
     if (!products || products.length === 0) {
       this.add('products', {
@@ -52,21 +45,16 @@ export const LocalDB = {
       });
     }
   },
-
   getAll(k) {
     try {
-      const raw = localStorage.getItem('mlea_' + k);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      console.error('Error parsing', k, e);
+      return JSON.parse(localStorage.getItem('mlea_' + k) || '[]');
+    } catch {
       return [];
     }
   },
-
   set(k, d) {
     localStorage.setItem('mlea_' + k, JSON.stringify(d));
   },
-
   add(k, item) {
     const items = this.getAll(k);
     const nextId = items.reduce((max, i) => Math.max(max, i.id || 0), 0) + 1;
@@ -76,7 +64,6 @@ export const LocalDB = {
     this.set(k, items);
     return item.id;
   },
-
   update(k, item) {
     const items = this.getAll(k);
     const idx = items.findIndex(i => i.id === item.id);
@@ -86,19 +73,15 @@ export const LocalDB = {
       this.set(k, items);
     }
   },
-
   delete(k, id) {
     this.set(k, this.getAll(k).filter(i => i.id !== id));
   },
-
   getById(k, id) {
     return this.getAll(k).find(i => i.id === id) || null;
   },
-
   getByBranch(k, bid) {
     return this.getAll(k).filter(i => i.branchId === bid);
   }
 };
 
-// Run init immediately
 LocalDB.init();
