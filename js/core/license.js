@@ -46,7 +46,7 @@ export function showLicGate() {
       s.className = 'lic-status ok';
     }
     // If the login screen needs to be re‑rendered
-    if (window.renderLogin) window.renderLogin();
+  if (window.renderLogin) window.renderLogin();
   } else {
     gate.style.display = 'flex';
     login.style.display = 'none';
