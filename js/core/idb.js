@@ -24,7 +24,6 @@ export const IDB = {
       req.onerror = () => resolve(false);
     });
   },
-
   async getAll(store) {
     if (!_idb) return LocalDB.getAll(store);
     return new Promise((resolve) => {
@@ -34,7 +33,6 @@ export const IDB = {
       req.onerror = () => resolve([]);
     });
   },
-
   async set(store, items) {
     if (!_idb) { LocalDB.set(store, items); return; }
     const validItems = (items || []).filter(item => item && typeof item.id !== 'undefined');
@@ -47,7 +45,6 @@ export const IDB = {
       tx.onerror = () => resolve();
     });
   },
-
   async add(store, item) {
     if (!item.id) {
       const items = await this.getAll(store);
@@ -60,7 +57,6 @@ export const IDB = {
     LocalDB.set(store, items);
     return item.id;
   },
-
   async update(store, item) {
     if (!item.id) return;
     const items = await this.getAll(store);
@@ -72,23 +68,19 @@ export const IDB = {
       LocalDB.set(store, items);
     }
   },
-
   async delete(store, id) {
     const items = (await this.getAll(store)).filter(i => i.id !== id);
     await this.set(store, items);
     LocalDB.set(store, items);
   },
-
   async getById(store, id) {
     const items = await this.getAll(store);
     return items.find(i => i.id === id) || null;
   },
-
   async getByBranch(store, bid) {
     const items = await this.getAll(store);
     return items.filter(i => i.branchId === bid);
   },
-
   async migrateFromLocal() {
     let count = 0;
     for (const store of STORES) {
@@ -106,7 +98,6 @@ export const IDB = {
         LocalDB.set(store, cleanItems);
         count += cleanItems.length;
       } else {
-        // Ensure store exists with empty array
         await this.set(store, []);
       }
     }
