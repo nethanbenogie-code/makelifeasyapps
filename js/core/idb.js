@@ -2,7 +2,7 @@
 import { LocalDB } from './localDB.js';
 
 const IDB_NAME = 'mlea_pos_v6';
-const IDB_VER = 3;  // increment version to force recreation
+const IDB_VER = 3;
 const STORES = ['products', 'sales', 'users', 'settings', 'branches', 'activityLogs',
                 'suppliers', 'purchaseOrders', 'voidedSales', 'heldSales', 'returns', 'customers'];
 
@@ -14,11 +14,6 @@ export const IDB = {
       const req = indexedDB.open(IDB_NAME, IDB_VER);
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
-        // Delete old stores if they exist (optional, to clean corrupted ones)
-        // for (const store of STORES) {
-        //   if (db.objectStoreNames.contains(store)) db.deleteObjectStore(store);
-        // }
-        // Create all stores
         STORES.forEach(store => {
           if (!db.objectStoreNames.contains(store)) {
             db.createObjectStore(store, { keyPath: 'id' });
@@ -36,7 +31,7 @@ export const IDB = {
       const tx = _idb.transaction(store, 'readonly');
       const req = tx.objectStore(store).getAll();
       req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => resolve([]);  // always return array
+      req.onerror = () => resolve([]);
     });
   },
 
@@ -49,10 +44,7 @@ export const IDB = {
       os.clear();
       validItems.forEach(item => os.put(item));
       tx.oncomplete = () => resolve();
-      tx.onerror = (err) => {
-        console.error('IDB.set error', err);
-        resolve();
-      };
+      tx.onerror = () => resolve();
     });
   },
 
@@ -113,8 +105,8 @@ export const IDB = {
         await this.set(store, cleanItems);
         LocalDB.set(store, cleanItems);
         count += cleanItems.length;
-      } else if (!(await this.getAll(store)).length) {
-        // Ensure store has at least an empty array
+      } else {
+        // Ensure store exists with empty array
         await this.set(store, []);
       }
     }
