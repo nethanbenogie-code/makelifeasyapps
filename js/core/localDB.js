@@ -9,24 +9,27 @@ export const LocalDB = {
         localStorage.setItem('mlea_' + s, '[]');
       }
     });
-    // 🔥 Seed default admin user if none exists
+
+    // ✅ Seed default admin user if none exists
     const users = this.getAll('users');
     if (!users || users.length === 0) {
       this.add('users', {
-        id: 1,
         name: 'Admin',
         role: 'admin',
         active: true,
         pin: '1234',
         branchId: null
       });
+      console.log('Admin user created');
     }
+
     // Seed default branch if needed
     const branches = this.getAll('branches');
     if (!branches || branches.length === 0) {
       this.add('branches', { name: 'Main Branch', address: 'Head Office', phone: '555-0000' });
     }
-    // Seed sample product if needed (optional)
+
+    // Seed sample product if needed
     const products = this.getAll('products');
     if (!products || products.length === 0) {
       this.add('products', {
@@ -54,9 +57,11 @@ export const LocalDB = {
       return [];
     }
   },
+
   set(k, d) {
     localStorage.setItem('mlea_' + k, JSON.stringify(d));
   },
+
   add(k, item) {
     const items = this.getAll(k);
     const nextId = items.reduce((max, i) => Math.max(max, i.id || 0), 0) + 1;
@@ -66,6 +71,7 @@ export const LocalDB = {
     this.set(k, items);
     return item.id;
   },
+
   update(k, item) {
     const items = this.getAll(k);
     const idx = items.findIndex(i => i.id === item.id);
@@ -75,15 +81,19 @@ export const LocalDB = {
       this.set(k, items);
     }
   },
+
   delete(k, id) {
     this.set(k, this.getAll(k).filter(i => i.id !== id));
   },
+
   getById(k, id) {
     return this.getAll(k).find(i => i.id === id) || null;
   },
+
   getByBranch(k, bid) {
     return this.getAll(k).filter(i => i.branchId === bid);
   }
 };
 
+// Run init automatically
 LocalDB.init();
