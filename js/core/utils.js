@@ -1,6 +1,6 @@
+// js/core/utils.js
 import { DB } from './db.js';
 
-// --- Currency definitions ---
 export const CURR = {
   PHP: { s: '₱', n: 'Philippine Peso', f: '🇵🇭', d: 2 },
   USD: { s: '$', n: 'US Dollar', f: '🇺🇸', d: 2 },
@@ -29,21 +29,18 @@ export const CURR = {
   BDT: { s: '৳', n: 'Bangladeshi Taka', f: '🇧🇩', d: 2 },
 };
 
-// --- Global settings (reactive) ---
 export let cur = 'PHP';
 export let taxRate = 0.12;
 export let lowStockThresh = 10;
 export let printMode = 'ask';
 export let rcptFooter = 'Thank you for your purchase!';
 
-// --- Currency formatter ---
 export function fc(amount) {
   const c = CURR[cur] || CURR.PHP;
   const n = parseFloat(amount) || 0;
   return c.s + (c.d === 0 ? Math.round(n).toLocaleString() : n.toFixed(2));
 }
 
-// --- Toast ---
 export function toast(msg, color = 'gold', dur = 3200) {
   const wrap = document.getElementById('toastWrap');
   if (!wrap) return;
@@ -60,7 +57,6 @@ export function toast(msg, color = 'gold', dur = 3200) {
   }, dur);
 }
 
-// --- Custom dialogs ---
 export function dlg(opts) {
   return new Promise(resolve => {
     const el = document.createElement('div');
@@ -102,35 +98,52 @@ export const alert2 = (msg, icon = 'ℹ️', color = 'var(--blue)') => dlg({ typ
 export const confirm2 = (msg, icon = '⚠️', danger = false) => dlg({ type: 'confirm', icon, msg, color: danger ? 'var(--rose)' : 'var(--gold)', danger, okLabel: 'Confirm', cancelLabel: 'Cancel' });
 export const prompt2 = (msg, placeholder = '', defaultVal = '', inputType = 'text') => dlg({ type: 'prompt', icon: '✏️', msg, placeholder, defaultVal, inputType, okLabel: 'Save', cancelLabel: 'Cancel', color: 'var(--gold)' });
 
-// --- Settings helpers ---
+// ✅ SAFE getSetting – always returns a string, never throws
 export function getSetting(key, def = '') {
-  const all = DB.getAll('settings') || [];
-  const found = all.find(s => s.key === key);
-  return found ? found.value : def;
+  try {
+    const all = DB.getAll('settings');
+    if (!Array.isArray(all)) {
+      console.warn(`getSetting: settings is not an array, returning default "${def}"`);
+      return def;
+    }
+    const found = all.find(s => s.key === key);
+    return found ? found.value : def;
+  } catch (err) {
+    console.warn(`getSetting error for key "${key}":`, err);
+    return def;
+  }
 }
 
+// ✅ SAFE saveSetting – ensures settings is an array before saving
 export function saveSetting(key, value) {
-  const all = DB.getAll('settings');
-  const found = all.find(s => s.key === key);
-  if (found) {
-    found.value = value;
-    DB.update('settings', found);
-  } else {
-    DB.add('settings', { key, value });
+  try {
+    let all = DB.getAll('settings');
+    if (!Array.isArray(all)) {
+      console.warn('saveSetting: settings not an array, resetting to empty array');
+      all = [];
+    }
+    const found = all.find(s => s.key === key);
+    if (found) {
+      found.value = value;
+      DB.update('settings', found);
+    } else {
+      DB.add('settings', { key, value });
+    }
+    // Update reactive globals
+    if (key === 'currency') cur = value;
+    if (key === 'taxRate') taxRate = parseFloat(value) || 0.12;
+    if (key === 'lowStockThresh') lowStockThresh = parseInt(value) || 10;
+    if (key === 'printMode') printMode = value || 'ask';
+    if (key === 'rcptFooter') rcptFooter = value || 'Thank you for your purchase!';
+  } catch (err) {
+    console.error('saveSetting error:', err);
   }
-  // Update reactive globals
-  if (key === 'currency') cur = value;
-  if (key === 'taxRate') taxRate = parseFloat(value) || 0.12;
-  if (key === 'lowStockThresh') lowStockThresh = parseInt(value) || 10;
-  if (key === 'printMode') printMode = value || 'ask';
-  if (key === 'rcptFooter') rcptFooter = value || 'Thank you for your purchase!';
 }
 
 export function getLowStockThreshold() {
   return lowStockThresh;
 }
 
-// --- Activity logging ---
 export function logAct(action, details) {
   const currentUser = window.currentUser;
   if (!currentUser) return;
@@ -145,7 +158,6 @@ export function logAct(action, details) {
   });
 }
 
-// --- Sync bar UI ---
 export function updateSyncBar() {
   const bar = document.getElementById('syncBar');
   if (!bar) return;
