@@ -1,6 +1,6 @@
 // js/core/auth.js
 import { DB } from './db.js';
-import { toast, confirm2, logAct, getSetting } from './utils.js';
+import { toast, confirm2, logAct, getSetting, saveSetting } from './utils.js';
 import { renderSidebar } from '../ui/sidebar.js';
 import { sw } from '../ui/render.js';
 
@@ -63,29 +63,16 @@ function updatePinDots() {
   });
 }
 
-export function renderLogin() {
-  // --- Ensure at least one user exists ---
-  let users = DB.getAll('users');
-  if (!users || users.length === 0) {
-    DB.add('users', {
-      name: 'Admin',
-      role: 'admin',
-      active: true,
-      pin: '1234',
-      branchId: null
-    });
-    console.log('Created default admin user');
-    users = DB.getAll('users'); // refresh
-  }
-  const userList = Array.isArray(users) ? users : [];
-
+export async function renderLogin() {
   const loginScreen = document.getElementById('loginScreen');
-  if (loginScreen) loginScreen.style.display = 'flex';
   const mainApp = document.getElementById('mainApp');
-  if (mainApp) mainApp.style.display = 'none';
   const syncBar = document.getElementById('syncBar');
+  if (loginScreen) loginScreen.style.display = 'flex';
+  if (mainApp) mainApp.style.display = 'none';
   if (syncBar) syncBar.style.display = 'none';
 
+  const users = await DB.getAll('users');
+  const userList = Array.isArray(users) ? users : [];
   const usrGrid = document.getElementById('usrGrid');
   if (usrGrid) {
     usrGrid.innerHTML = userList.filter(u => u.active).map(u => `
@@ -117,14 +104,14 @@ export function renderLogin() {
   });
 }
 
-function submitPin() {
+async function submitPin() {
   if (checkLock()) return;
   if (!window.selectedUserId) {
     const errMsg = document.getElementById('errMsg');
     if (errMsg) errMsg.textContent = 'Select a user first';
     return;
   }
-  const users = DB.getAll('users');
+  const users = await DB.getAll('users');
   const user = (Array.isArray(users) ? users : []).find(u => u.id === window.selectedUserId);
   if (!user || !user.active) {
     const errMsg = document.getElementById('errMsg');
@@ -138,13 +125,10 @@ function submitPin() {
     pinLockUntil = 0;
     currentUser = user;
     window.currentUser = user;
-    const loginScreen = document.getElementById('loginScreen');
-    if (loginScreen) loginScreen.style.display = 'none';
-    const mainApp = document.getElementById('mainApp');
-    if (mainApp) mainApp.style.display = 'block';
-    const syncBar = document.getElementById('syncBar');
-    if (syncBar) syncBar.style.display = 'flex';
-    const branch = user.branchId ? DB.getById('branches', user.branchId) : null;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('syncBar').style.display = 'flex';
+    const branch = user.branchId ? await DB.getById('branches', user.branchId) : null;
     const hdrBranch = document.getElementById('hdrBranch');
     if (hdrBranch) hdrBranch.innerHTML = user.branchId ? `<span class="br-chip">🏢 ${branch ? branch.name : 'Branch'}</span>` : `<span class="adm-chip">👑 Admin</span>`;
     const hdrTitle = document.getElementById('hdrTitle');
@@ -157,8 +141,8 @@ function submitPin() {
     if (errMsg) errMsg.textContent = '';
     resetSesTimer();
     sw('dashboard');
-    setTimeout(() => {
-      const products = DB.getAll('products');
+    setTimeout(async () => {
+      const products = await DB.getAll('products');
       const low = (Array.isArray(products) ? products : []).filter(p => p.active && p.stock <= lowStockThresh).length;
       if (low) toast(`⚠️ ${low} low stock item(s)`, 'rose', 5000);
     }, 700);
@@ -185,14 +169,10 @@ export function logout() {
     window.currentUser = null;
     clearTimeout(sesTimer);
     clearTimeout(sesWarnTimer);
-    const mainApp = document.getElementById('mainApp');
-    if (mainApp) mainApp.style.display = 'none';
-    const syncBar = document.getElementById('syncBar');
-    if (syncBar) syncBar.style.display = 'none';
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar) sidebar.classList.remove('on');
-    const sbOv = document.getElementById('sbOv');
-    if (sbOv) sbOv.classList.remove('on');
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('syncBar').style.display = 'none';
+    document.getElementById('sidebar').classList.remove('on');
+    document.getElementById('sbOv').classList.remove('on');
     renderLogin();
   });
 }
@@ -214,21 +194,17 @@ export function initAuth() {
       }
     });
   });
-  const clrBtn = document.querySelector('.pbn.clr');
-  if (clrBtn) clrBtn.addEventListener('click', () => {
+  document.querySelector('.pbn.clr')?.addEventListener('click', () => {
     pinEntry = '';
     updatePinDots();
     const errMsg = document.getElementById('errMsg');
     if (errMsg) errMsg.textContent = '';
   });
-  const subBtn = document.querySelector('.pbn.sub');
-  if (subBtn) subBtn.addEventListener('click', submitPin);
-  const logoutBtn1 = document.getElementById('logoutBtn');
-  if (logoutBtn1) logoutBtn1.addEventListener('click', logout);
-  const logoutBtn2 = document.getElementById('logoutBtn2');
-  if (logoutBtn2) logoutBtn2.addEventListener('click', logout);
+  document.querySelector('.pbn.sub')?.addEventListener('click', submitPin);
+  document.getElementById('logoutBtn')?.addEventListener('click', logout);
+  document.getElementById('logoutBtn2')?.addEventListener('click', logout);
 
-  // Safe settings loading
+  // Load settings safely
   const settings = DB.getAll('settings');
   if (Array.isArray(settings)) {
     settings.forEach(s => {
@@ -238,8 +214,6 @@ export function initAuth() {
       if (s.key === 'printMode') window.printMode = s.value || 'ask';
       if (s.key === 'rcptFooter') window.rcptFooter = s.value || 'Thank you for your purchase!';
     });
-  } else {
-    console.warn('Settings not an array, using defaults');
   }
 }
 
