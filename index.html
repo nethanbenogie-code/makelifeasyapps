@@ -1742,6 +1742,7 @@ function renderUsers(el){
   el.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h4 style="margin:0">Users</h4><button class="btn bp bsm" onclick="showAddUserModal()">+ Add</button></div>
   ${usrs.map(u=>{
     const canDel=currentUser.role==='admin'&&u.id!==currentUser.id||(currentUser.role==='manager'&&u.role==='cashier'&&u.branchId===currentUser.branchId);
+    const canChangePin = (currentUser.role==='admin') || (currentUser.role==='manager' && u.role==='cashier' && u.branchId===currentUser.branchId);
     return`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:1.4em">${u.role==='admin'?'👑':u.role==='manager'?'🎯':'👤'}</span>
@@ -1754,6 +1755,7 @@ function renderUsers(el){
       </div>
       <div style="display:flex;gap:6px">
         ${currentUser.role==='admin'||(currentUser.role==='manager'&&u.role==='cashier')?`<button class="btn bw bxs" onclick="toggleUser(${u.id})">${u.active?'Deact.':'Activate'}</button>`:''}
+        ${canChangePin?`<button class="btn bs bxs" onclick="changeUserPin(${u.id})">🔑 Change PIN</button>`:''}
         ${canDel?`<button class="btn bd bxs" onclick="deleteUserSafe(${u.id},'${u.name}','${u.role}')">🗑</button>`:''}
       </div>
     </div></div>`;}).join('')}`;
@@ -1775,6 +1777,31 @@ async function deleteUserSafe(id,name,role){
   const ok=await confirm2(`Delete user "${name}" (${role})? This cannot be undone.`,'👥',true);
   if(ok){DB.delete('users',id);sw(currentView);renderLogin();toast('User deleted ✓','emerald');}
 }
+
+async function changeUserPin(userId){
+  const user = DB.getById('users', userId);
+  if(!user){
+    toast('User not found','rose');
+    return;
+  }
+  // Permission check (same as button visibility)
+  if(!(currentUser.role==='admin' || (currentUser.role==='manager' && user.role==='cashier' && user.branchId===currentUser.branchId))){
+    toast('You are not allowed to change this user\'s PIN','rose');
+    return;
+  }
+  const newPin = await prompt2(`Enter new 4-digit PIN for ${user.name}:`, 'e.g. 1234', '', 'number');
+  if(!newPin) return;
+  if(!/^\d{4}$/.test(newPin)){
+    toast('PIN must be exactly 4 digits','rose');
+    return;
+  }
+  user.pin = newPin;
+  DB.update('users', user);
+  logAct('PIN Change', `${currentUser.name} changed PIN for ${user.name}`);
+  toast(`PIN for ${user.name} changed successfully ✓`,'emerald');
+  // Refresh the view to show updated user list (no visual change needed, but good)
+  sw(currentView);
+}  
 async function toggleUser(id){
   const u=DB.getById('users',id);if(!u||u.id===currentUser.id){toast('You cannot deactivate yourself','rose');return;}
   u.active=!u.active;DB.update('users',u);sw(currentView);renderLogin();
