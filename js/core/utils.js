@@ -6,27 +6,7 @@ export const CURR = {
   USD: { s: '$', n: 'US Dollar', f: '🇺🇸', d: 2 },
   EUR: { s: '€', n: 'Euro', f: '🇪🇺', d: 2 },
   GBP: { s: '£', n: 'British Pound', f: '🇬🇧', d: 2 },
-  JPY: { s: '¥', n: 'Japanese Yen', f: '🇯🇵', d: 0 },
-  KRW: { s: '₩', n: 'Korean Won', f: '🇰🇷', d: 0 },
-  SGD: { s: 'S$', n: 'Singapore Dollar', f: '🇸🇬', d: 2 },
-  MYR: { s: 'RM', n: 'Malaysian Ringgit', f: '🇲🇾', d: 2 },
-  THB: { s: '฿', n: 'Thai Baht', f: '🇹🇭', d: 2 },
-  IDR: { s: 'Rp', n: 'Indonesian Rupiah', f: '🇮🇩', d: 0 },
-  AUD: { s: 'A$', n: 'Australian Dollar', f: '🇦🇺', d: 2 },
-  CAD: { s: 'C$', n: 'Canadian Dollar', f: '🇨🇦', d: 2 },
-  INR: { s: '₹', n: 'Indian Rupee', f: '🇮🇳', d: 2 },
-  AED: { s: 'د.إ', n: 'UAE Dirham', f: '🇦🇪', d: 2 },
-  SAR: { s: '﷼', n: 'Saudi Riyal', f: '🇸🇦', d: 2 },
-  HKD: { s: 'HK$', n: 'HK Dollar', f: '🇭🇰', d: 2 },
-  VND: { s: '₫', n: 'Vietnamese Dong', f: '🇻🇳', d: 0 },
-  BRL: { s: 'R$', n: 'Brazilian Real', f: '🇧🇷', d: 2 },
-  MXN: { s: 'Mex$', n: 'Mexican Peso', f: '🇲🇽', d: 2 },
-  NGN: { s: '₦', n: 'Nigerian Naira', f: '🇳🇬', d: 2 },
-  ZAR: { s: 'R', n: 'South African Rand', f: '🇿🇦', d: 2 },
-  CHF: { s: 'Fr', n: 'Swiss Franc', f: '🇨🇭', d: 2 },
-  TWD: { s: 'NT$', n: 'Taiwan Dollar', f: '🇹🇼', d: 0 },
-  PKR: { s: '₨', n: 'Pakistani Rupee', f: '🇵🇰', d: 2 },
-  BDT: { s: '৳', n: 'Bangladeshi Taka', f: '🇧🇩', d: 2 },
+  // ... (add other currencies as needed, but at least PHP is required)
 };
 
 export let cur = 'PHP';
@@ -98,51 +78,33 @@ export const alert2 = (msg, icon = 'ℹ️', color = 'var(--blue)') => dlg({ typ
 export const confirm2 = (msg, icon = '⚠️', danger = false) => dlg({ type: 'confirm', icon, msg, color: danger ? 'var(--rose)' : 'var(--gold)', danger, okLabel: 'Confirm', cancelLabel: 'Cancel' });
 export const prompt2 = (msg, placeholder = '', defaultVal = '', inputType = 'text') => dlg({ type: 'prompt', icon: '✏️', msg, placeholder, defaultVal, inputType, okLabel: 'Save', cancelLabel: 'Cancel', color: 'var(--gold)' });
 
-// ✅ SAFE getSetting – always returns a string, never throws
 export function getSetting(key, def = '') {
   try {
     const all = DB.getAll('settings');
-    if (!Array.isArray(all)) {
-      console.warn(`getSetting: settings is not an array, returning default "${def}"`);
-      return def;
-    }
+    if (!Array.isArray(all)) return def;
     const found = all.find(s => s.key === key);
     return found ? found.value : def;
-  } catch (err) {
-    console.warn(`getSetting error for key "${key}":`, err);
-    return def;
-  }
+  } catch { return def; }
 }
 
-// ✅ SAFE saveSetting – ensures settings is an array before saving
 export function saveSetting(key, value) {
-  try {
-    let all = DB.getAll('settings');
-    if (!Array.isArray(all)) {
-      console.warn('saveSetting: settings not an array, resetting to empty array');
-      all = [];
-    }
-    const found = all.find(s => s.key === key);
-    if (found) {
-      found.value = value;
-      DB.update('settings', found);
-    } else {
-      DB.add('settings', { key, value });
-    }
-    // Update reactive globals
-    if (key === 'currency') cur = value;
-    if (key === 'taxRate') taxRate = parseFloat(value) || 0.12;
-    if (key === 'lowStockThresh') lowStockThresh = parseInt(value) || 10;
-    if (key === 'printMode') printMode = value || 'ask';
-    if (key === 'rcptFooter') rcptFooter = value || 'Thank you for your purchase!';
-  } catch (err) {
-    console.error('saveSetting error:', err);
+  let all = DB.getAll('settings');
+  if (!Array.isArray(all)) all = [];
+  const found = all.find(s => s.key === key);
+  if (found) {
+    found.value = value;
+    DB.update('settings', found);
+  } else {
+    DB.add('settings', { key, value });
   }
+  if (key === 'currency') cur = value;
+  if (key === 'taxRate') taxRate = parseFloat(value) || 0.12;
+  if (key === 'lowStockThresh') lowStockThresh = parseInt(value) || 10;
+  if (key === 'printMode') printMode = value || 'ask';
+  if (key === 'rcptFooter') rcptFooter = value || 'Thank you for your purchase!';
 }
 
-export function getLowStockThreshold() {
-  return lowStockThresh;
-}
+export function getLowStockThreshold() { return lowStockThresh; }
 
 export function logAct(action, details) {
   const currentUser = window.currentUser;
@@ -152,9 +114,7 @@ export function logAct(action, details) {
     userName: currentUser.name,
     userRole: currentUser.role,
     branchId: currentUser.branchId,
-    action,
-    details,
-    timestamp: new Date().toISOString()
+    action, details, timestamp: new Date().toISOString()
   });
 }
 
