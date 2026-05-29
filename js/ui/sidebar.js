@@ -2,35 +2,25 @@
 import { DB } from '../core/db.js';
 import { currentUser } from '../core/auth.js';
 
-function getBadges() {
+async function getBadges() {
   try {
-    const products = DB.getAll('products') || [];
+    const products = await DB.getAll('products');
     const productsArray = Array.isArray(products) ? products : [];
     const lowStock = productsArray.filter(p => p.active && p.stock <= (window.lowStockThresh || 10)).length;
-    const held = DB.getAll('heldSales') || [];
+    const held = await DB.getAll('heldSales');
     const heldCount = Array.isArray(held) ? held.length : 0;
     return { lowStock, held: heldCount };
   } catch (err) {
-    console.warn('Error getting badges:', err);
     return { lowStock: 0, held: 0 };
   }
 }
 
-export function renderSidebar() {
+export async function renderSidebar() {
   const nav = document.getElementById('sbNav');
-  if (!nav) {
-    console.warn('Sidebar container not found');
-    return;
-  }
-  if (!currentUser || !currentUser.role) {
-    console.warn('No current user or role – sidebar not rendered');
-    return;
-  }
-
+  if (!nav || !currentUser) return;
   const role = currentUser.role;
-  const badges = getBadges();
+  const badges = await getBadges();
   let items = [];
-
   if (role === 'admin') {
     items = [
       { icon: '📊', label: 'Dashboard', view: 'dashboard' },
@@ -49,7 +39,6 @@ export function renderSidebar() {
       { icon: '💳', label: 'POS Terminal', view: 'pos', badge: 'held' }
     ];
   }
-
   let html = '';
   items.forEach(item => {
     let badgeHtml = '';
@@ -61,5 +50,4 @@ export function renderSidebar() {
     </div>`;
   });
   nav.innerHTML = html;
-  console.log('Sidebar rendered for role:', role);
 }
