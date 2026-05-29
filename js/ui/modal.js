@@ -1,9 +1,11 @@
+// js/ui/modal.js
 export function openModal(html) {
   const modal = document.getElementById('modal');
   const box = document.getElementById('modalBox');
-  if (!modal || !box) return;
-  box.innerHTML = html;
-  modal.classList.add('on');
+  if (modal && box) {
+    box.innerHTML = html;
+    modal.classList.add('on');
+  }
 }
 
 export function closeModal() {
