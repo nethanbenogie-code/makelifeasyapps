@@ -2,19 +2,30 @@
 import { DB } from '../core/db.js';
 import { currentUser } from '../core/auth.js';
 
-// Helper to get badge counts (low stock, held sales)
 function getBadges() {
-  const products = DB.getAll('products');
-  const productsArray = Array.isArray(products) ? products : [];
-  const lowStock = productsArray.filter(p => p.active && p.stock <= (window.lowStockThresh || 10)).length;
-  const held = DB.getAll('heldSales');
-  const heldCount = Array.isArray(held) ? held.length : 0;
-  return { lowStock, held: heldCount };
+  try {
+    const products = DB.getAll('products') || [];
+    const productsArray = Array.isArray(products) ? products : [];
+    const lowStock = productsArray.filter(p => p.active && p.stock <= (window.lowStockThresh || 10)).length;
+    const held = DB.getAll('heldSales') || [];
+    const heldCount = Array.isArray(held) ? held.length : 0;
+    return { lowStock, held: heldCount };
+  } catch (err) {
+    console.warn('Error getting badges:', err);
+    return { lowStock: 0, held: 0 };
+  }
 }
 
 export function renderSidebar() {
   const nav = document.getElementById('sbNav');
-  if (!nav || !currentUser) return;
+  if (!nav) {
+    console.warn('Sidebar container not found');
+    return;
+  }
+  if (!currentUser || !currentUser.role) {
+    console.warn('No current user or role – sidebar not rendered');
+    return;
+  }
 
   const role = currentUser.role;
   const badges = getBadges();
@@ -50,4 +61,5 @@ export function renderSidebar() {
     </div>`;
   });
   nav.innerHTML = html;
+  console.log('Sidebar rendered for role:', role);
 }
