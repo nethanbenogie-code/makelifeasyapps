@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MLEA POS v6 Modular</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#d4a853">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/styles.css">
-  <style>
-    /* Minimal extra to ensure visibility */
-    #mainContent { min-height: 200px; }
-    .debug { position: fixed; bottom: 0; left: 0; background: red; color: white; padding: 4px; z-index: 9999; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="amb"></div>
+<iframe id="printFrame" style="display:none" title="Print"></iframe>
 <div id="toastWrap" class="toast-wrap"></div>
 <div class="wrap">
   <!-- LICENSE GATE -->
@@ -20,22 +22,31 @@
     <div class="lic-card">
       <div class="lic-logo">🔐</div>
       <h2>MLEA POS</h2>
-      <p>Enter license key</p>
+      <p>Enter your license key to unlock the system</p>
       <input class="lic-input" type="text" id="licenseInput" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19">
-      <button class="btn bp" id="activateBtn">Activate</button>
+      <!-- Activate button with direct onclick calling global function -->
+      <button class="btn bp" id="activateBtn" onclick="activateLicense()" style="width:100%">Activate License</button>
+      <button class="btn bd" id="deactivateBtn" style="display:none;width:100%;margin-top:8px" onclick="deactivateLicense()">Deactivate License</button>
+      <button class="btn bb" id="validateBtn" style="display:none;width:100%;margin-top:8px" onclick="validateLicense()">🔍 Check Status</button>
       <div class="lic-status" id="licStatus"></div>
     </div>
   </div>
 
-  <!-- LOGIN -->
+  <!-- LOGIN SCREEN -->
   <div id="loginScreen" style="display:none">
     <div class="log-card">
-      <div class="log-logo"><div class="log-icon">🏪</div><h1>MLEA POS</h1><p>Modular v6</p></div>
+      <div class="log-logo">
+        <div class="log-icon">🏪</div>
+        <h1>MLEA POS</h1>
+        <p>Modular v6 · BIR‑Ready</p>
+      </div>
       <div class="sec-label">Select User</div>
       <div class="usr-grid" id="usrGrid"></div>
       <div class="lockout-bar" id="lockoutBar"></div>
-      <div class="sec-label">Enter PIN</div>
-      <div class="pin-dots" id="pinDots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+      <div class="sec-label" style="margin-top:4px">Enter PIN</div>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
       <div class="err-msg" id="errMsg"></div>
       <div class="pin-grid">
         <button class="pbn" data-pin="1">1</button><button class="pbn" data-pin="2">2</button><button class="pbn" data-pin="3">3</button>
@@ -46,25 +57,37 @@
     </div>
   </div>
 
-  <!-- MAIN APP -->
+  <!-- MAIN APP (hidden until login) -->
   <div id="mainApp" style="display:none">
     <div class="sb-ov" id="sbOv"></div>
     <div class="sidebar" id="sidebar">
-      <div class="sb-hdr"><div class="sb-logo">🏪</div><div class="sb-hdr-txt"><h3>MLEA POS</h3><p id="sbSub">v6</p></div></div>
+      <div class="sb-hdr">
+        <div class="sb-logo">🏪</div>
+        <div class="sb-hdr-txt"><h3>MLEA POS</h3><p id="sbSub">v6 Modular</p></div>
+      </div>
       <div class="sb-nav" id="sbNav"></div>
       <div class="sb-ft"><button class="sb-ft-btn" id="logoutBtn">🚪 Sign Out</button></div>
     </div>
     <div class="hdr">
       <button class="hambg" id="menuBtn">☰</button>
       <span class="hdr-logo" id="hdrTitle">MLEA POS</span>
-      <div class="hdr-r"><span id="hdrBranch"></span><button class="hbtn" id="logoutBtn2">Sign Out</button></div>
+      <div class="hdr-r">
+        <span id="hdrBranch"></span>
+        <button class="hbtn" id="logoutBtn2">Sign Out</button>
+      </div>
     </div>
-    <div id="mainContent">Loading...</div>
+    <div id="mainContent"></div>
   </div>
-  <div class="sync-bar" id="syncBar"><span><span class="sdot local" id="syncDot"></span><span id="syncLabel">Local</span></span><span id="syncMsg">Ready</span></div>
+
+  <div class="sync-bar" id="syncBar">
+    <span><span class="sdot local" id="syncDot"></span><span id="syncLabel">Local Storage</span></span>
+    <span id="syncMsg">Ready</span>
+  </div>
 </div>
+
 <div class="modal" id="modal"><div class="modal-box" id="modalBox"></div></div>
 
+<!-- Main module script -->
 <script type="module" src="js/main.js"></script>
 </body>
 </html>
