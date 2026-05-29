@@ -2,24 +2,20 @@
 import { DB } from '../core/db.js';
 import { currentUser } from '../core/auth.js';
 
-async function getBadges() {
-  try {
-    const products = await DB.getAll('products');
-    const productsArray = Array.isArray(products) ? products : [];
-    const lowStock = productsArray.filter(p => p.active && p.stock <= (window.lowStockThresh || 10)).length;
-    const held = await DB.getAll('heldSales');
-    const heldCount = Array.isArray(held) ? held.length : 0;
-    return { lowStock, held: heldCount };
-  } catch (err) {
-    return { lowStock: 0, held: 0 };
-  }
+function getBadges() {
+  const products = DB.getAll('products') || [];
+  const productsArray = Array.isArray(products) ? products : [];
+  const lowStock = productsArray.filter(p => p.active && p.stock <= (window.lowStockThresh || 10)).length;
+  const held = DB.getAll('heldSales') || [];
+  const heldCount = Array.isArray(held) ? held.length : 0;
+  return { lowStock, held: heldCount };
 }
 
-export async function renderSidebar() {
+export function renderSidebar() {
   const nav = document.getElementById('sbNav');
   if (!nav || !currentUser) return;
   const role = currentUser.role;
-  const badges = await getBadges();
+  const badges = getBadges();
   let items = [];
   if (role === 'admin') {
     items = [
