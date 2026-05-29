@@ -1,16 +1,21 @@
 // js/main.js - Entry point for MLEA POS Modular v6
 
-// Core modules
 import { initDB, DB } from './core/db.js';
-import { initAuth, renderLogin, logout, setCurrentUser, currentUser } from './core/auth.js';
+import {
+  initAuth,
+  renderLogin,
+  logout,
+  setCurrentUser,
+  currentUser,
+  resetSesTimer
+} from './core/auth.js';
 import { initLicense, showLicGate } from './core/license.js';
 import { toast, updateSyncBar } from './core/utils.js';
 import { renderSidebar } from './ui/sidebar.js';
 import { sw, registerView } from './ui/render.js';
 import { initModal, openModal, closeModal } from './ui/modal.js';
 
-// Feature modules (temporary minimal versions for testing)
-// Replace these with full feature imports later
+// ========== TEMPORARY VIEWS (replace with full features later) ==========
 function renderDashboard(el) {
   el.innerHTML = `
     <div class="card">
@@ -40,56 +45,57 @@ function renderPOS(el) {
 registerView('dashboard', renderDashboard);
 registerView('pos', renderPOS);
 
-// Expose global functions to inline onclick handlers
+// ========== GLOBAL EXPOSURES (for inline onclick handlers) ==========
 window.sw = sw;
 window.toast = toast;
 window.logout = logout;
 window.openModal = openModal;
 window.closeModal = closeModal;
 
-// Make DB and currentUser available for debugging (optional)
+// Expose DB and currentUser for debugging (optional)
 window.DB = DB;
 window.currentUser = currentUser;
 
+// ========== INITIALIZATION ==========
 async function init() {
   console.log('🚀 Initializing MLEA POS...');
 
   try {
-    // Initialize database (localStorage / IndexedDB)
+    // 1. Database (IndexedDB / localStorage)
     await initDB();
     console.log('✅ Database initialized');
 
-    // Initialize modal system
+    // 2. Modal system
     initModal();
 
-    // Initialize license (attaches Activate button handler)
+    // 3. License (attaches Activate button handler)
     await initLicense();
     console.log('✅ License module ready');
 
-    // Initialize authentication (sets up PIN pad, etc.)
+    // 4. Authentication (PIN pad, login UI)
     initAuth();
     console.log('✅ Auth module ready');
 
-    // Update sync bar UI
+    // 5. Sync bar UI
     updateSyncBar();
 
-    // Check if license is already activated
+    // 6. Determine which screen to show
     const isActivated = localStorage.getItem('mlea_activated') === 'true';
     const licenseGate = document.getElementById('licenseGate');
     const loginScreen = document.getElementById('loginScreen');
     const mainApp = document.getElementById('mainApp');
 
     if (isActivated) {
-      // Hide license gate, show login
+      // License already active → show login screen
       if (licenseGate) licenseGate.style.display = 'none';
       if (loginScreen) loginScreen.style.display = 'flex';
       if (mainApp) mainApp.style.display = 'none';
 
-      // Render the user list for login
+      // Render user list (Admin user is created by localDB.js)
       renderLogin();
       console.log('✅ Login screen rendered');
     } else {
-      // Show license gate (already visible by default, but ensure)
+      // No active license → show license gate
       if (licenseGate) licenseGate.style.display = 'flex';
       if (loginScreen) loginScreen.style.display = 'none';
       if (mainApp) mainApp.style.display = 'none';
