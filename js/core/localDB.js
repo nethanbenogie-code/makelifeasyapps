@@ -9,10 +9,11 @@ export const LocalDB = {
         localStorage.setItem('mlea_' + s, '[]');
       }
     });
-    // Seed default admin user if none
+    // 🔥 Seed default admin user if none exists
     const users = this.getAll('users');
     if (!users || users.length === 0) {
       this.add('users', {
+        id: 1,
         name: 'Admin',
         role: 'admin',
         active: true,
@@ -20,12 +21,12 @@ export const LocalDB = {
         branchId: null
       });
     }
-    // Seed default branch if none
+    // Seed default branch if needed
     const branches = this.getAll('branches');
     if (!branches || branches.length === 0) {
       this.add('branches', { name: 'Main Branch', address: 'Head Office', phone: '555-0000' });
     }
-    // Seed sample product if none
+    // Seed sample product if needed (optional)
     const products = this.getAll('products');
     if (!products || products.length === 0) {
       this.add('products', {
@@ -45,6 +46,7 @@ export const LocalDB = {
       });
     }
   },
+
   getAll(k) {
     try {
       return JSON.parse(localStorage.getItem('mlea_' + k) || '[]');
