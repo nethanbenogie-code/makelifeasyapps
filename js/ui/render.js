@@ -1,3 +1,4 @@
+// js/ui/render.js
 const views = new Map();
 
 export function registerView(name, renderFn) {
@@ -18,6 +19,6 @@ export function sw(view) {
       el.style.transform = 'translateY(0)';
     }, 80);
   } else {
-    console.warn(`View "${view}" not registered`);
+    el.innerHTML = `<div class="card"><h4>View Not Found</h4><p>The view "${view}" is not registered.</p><button class="btn bb" onclick="sw('dashboard')">Back to Dashboard</button></div>`;
   }
 }
