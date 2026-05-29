@@ -1,4 +1,4 @@
-// js/core/db.js (synchronous, no IndexedDB)
+// js/core/db.js
 import { LocalDB } from './localDB.js';
 
 export const DB = {
