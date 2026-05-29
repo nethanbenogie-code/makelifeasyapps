@@ -1,6 +1,6 @@
 // js/core/license.js
 const LIC_SRV = 'https://script.google.com/macros/s/AKfycby1QlCg9jzpXmxtE1N-5w7b4CuGa0TT5gcfwYrx-0yetL4iI5s86ZX8NyLhDwo4tLJX/exec';
-const DEMO_FALLBACK_KEY = '3NA5-5N7I-HTF5-6T10'; // your personal key as fallback (optional)
+const DEMO_FALLBACK_KEY = '3NA5-5N7I-HTF5-6T10'; // your personal key as fallback
 
 function devId() {
   return btoa(navigator.userAgent.slice(-15) + screen.width + 'x' + screen.height + new Date().getTimezoneOffset())
@@ -31,7 +31,6 @@ export function showLicGate() {
   const login = document.getElementById('loginScreen');
   const main = document.getElementById('mainApp');
   if (!gate) return;
-
   if (isActiv()) {
     gate.style.display = 'none';
     login.style.display = 'flex';
@@ -48,24 +47,21 @@ export function showLicGate() {
   }
 }
 
-// Global activation function (can be called directly from button's onclick)
+// Global activation function (called directly from button's onclick)
 window.activateLicense = async function() {
   const input = document.getElementById('licenseInput');
   const key = input?.value.trim().toUpperCase() || '';
   const statusDiv = document.getElementById('licStatus');
   const activateBtn = document.getElementById('activateBtn');
-
   if (!key) {
     if (statusDiv) { statusDiv.textContent = '⚠️ Enter license key'; statusDiv.className = 'lic-status err'; }
     return;
   }
-
   if (activateBtn) activateBtn.disabled = true;
   if (statusDiv) {
     statusDiv.innerHTML = '<span class="spinner"></span> Verifying…';
     statusDiv.className = 'lic-status';
   }
-
   try {
     const response = await fetch(
       `${LIC_SRV}?action=activate&licenseKey=${encodeURIComponent(key)}&deviceId=${encodeURIComponent(devId())}`
@@ -84,8 +80,6 @@ window.activateLicense = async function() {
       }
     }
   } catch (err) {
-    console.warn('License server unreachable, using offline fallback (demo).', err);
-    // Optional offline fallback – remove if you want strict online only
     if (key === DEMO_FALLBACK_KEY) {
       setActiv(key);
       if (statusDiv) {
@@ -103,7 +97,6 @@ window.activateLicense = async function() {
   }
 };
 
-// Also define other global functions for deactivate/validate if needed
 window.validateLicense = async function() {
   const key = localStorage.getItem('mlea_lic');
   const statusDiv = document.getElementById('licStatus');
@@ -146,7 +139,6 @@ window.deactivateLicense = async function() {
   clrActiv();
 };
 
-// Format license input as XXXX-XXXX-XXXX-XXXX
 function formatLicenseInput(input) {
   if (!input) return;
   input.addEventListener('input', function() {
@@ -159,32 +151,19 @@ function formatLicenseInput(input) {
 }
 
 export async function initLicense() {
-  // Wait for DOM to be fully loaded
   if (document.readyState === 'loading') {
     await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
   }
-
   const activateBtn = document.getElementById('activateBtn');
   const deactivateBtn = document.getElementById('deactivateBtn');
   const validateBtn = document.getElementById('validateBtn');
   const licenseInput = document.getElementById('licenseInput');
-
-  // Format input field
   formatLicenseInput(licenseInput);
-
-  // Attach click handlers to buttons (directly, without relying on inline onclick)
-  if (activateBtn) {
-    // Remove any existing listeners to avoid duplicates
-    const newBtn = activateBtn.cloneNode(true);
-    activateBtn.parentNode.replaceChild(newBtn, activateBtn);
-    newBtn.onclick = () => window.activateLicense();
-  } else {
-    console.warn('Activate button not found');
+  // Ensure the global functions are attached (they already are, but we keep the buttons as backup)
+  if (activateBtn && !activateBtn.onclick) {
+    activateBtn.onclick = () => window.activateLicense();
   }
-
-  if (deactivateBtn) deactivateBtn.onclick = () => window.deactivateLicense();
-  if (validateBtn) validateBtn.onclick = () => window.validateLicense();
-
-  // Show the correct UI
+  if (deactivateBtn && !deactivateBtn.onclick) deactivateBtn.onclick = () => window.deactivateLicense();
+  if (validateBtn && !validateBtn.onclick) validateBtn.onclick = () => window.validateLicense();
   showLicGate();
 }
