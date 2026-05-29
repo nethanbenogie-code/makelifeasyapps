@@ -1,16 +1,58 @@
-// js/core/db.js – synchronous localStorage version
+// js/core/db.js
 import { LocalDB } from './localDB.js';
+import { IDB } from './idb.js';
+import { FirebaseDB } from './firebaseDB.js';
+
+let storageMode = 'local';
+const safeArray = (data) => Array.isArray(data) ? data : [];
 
 export const DB = {
-  getAll(store) { return LocalDB.getAll(store); },
-  set(store, data) { LocalDB.set(store, data); },
-  add(store, item) { return LocalDB.add(store, item); },
-  update(store, item) { LocalDB.update(store, item); },
-  delete(store, id) { LocalDB.delete(store, id); },
-  getById(store, id) { return LocalDB.getById(store, id); },
-  getByBranch(store, bid) { return LocalDB.getByBranch(store, bid); }
+  async getAll(store) {
+    try {
+      const result = await this._getImpl().getAll(store);
+      return safeArray(result);
+    } catch (e) { return []; }
+  },
+  async set(store, data) {
+    return this._getImpl().set(store, safeArray(data));
+  },
+  async add(store, item) {
+    return this._getImpl().add(store, item);
+  },
+  async update(store, item) {
+    return this._getImpl().update(store, item);
+  },
+  async delete(store, id) {
+    return this._getImpl().delete(store, id);
+  },
+  async getById(store, id) {
+    return this._getImpl().getById(store, id);
+  },
+  async getByBranch(store, bid) {
+    const result = await this._getImpl().getByBranch(store, bid);
+    return safeArray(result);
+  },
+  _getImpl() {
+    if (storageMode === 'firebase' && window.isOnline) return FirebaseDB;
+    if (storageMode === 'idb' && window._idb) return IDB;
+    return LocalDB;
+  },
+  setMode(mode) { storageMode = mode; }
 };
 
-export function initDB() {
-  console.log('Storage mode: localStorage (sync)');
+export async function initDB() {
+  try {
+    const idbOk = await IDB.init();
+    if (idbOk) {
+      storageMode = 'idb';
+      await IDB.migrateFromLocal();
+      console.log('Storage mode: IndexedDB');
+    } else {
+      storageMode = 'local';
+      console.log('Storage mode: localStorage');
+    }
+  } catch (err) {
+    storageMode = 'local';
+    console.log('Storage mode: localStorage (fallback)');
+  }
 }
