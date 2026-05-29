@@ -9,12 +9,10 @@ export const LocalDB = {
         localStorage.setItem('mlea_' + s, '[]');
       }
     });
-    // Seed admin user if none exists
     const users = this.getAll('users');
     if (!users || users.length === 0) {
       this.add('users', { name: 'Admin', role: 'admin', active: true, pin: '1234', branchId: null });
     }
-    // Ensure settings is an empty array (prevents "not an array" warnings)
     const settings = this.getAll('settings');
     if (!settings || settings.length === 0) {
       this.set('settings', []);
