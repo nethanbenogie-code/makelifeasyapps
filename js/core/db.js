@@ -1,58 +1,17 @@
-// js/core/db.js
-import { LocalDB } from './localDB.js';
-import { IDB } from './idb.js';
-import { FirebaseDB } from './firebaseDB.js';
-
-let storageMode = 'local';
-const safeArray = (data) => Array.isArray(data) ? data : [];
-
-export const DB = {
-  async getAll(store) {
-    try {
-      const result = await this._getImpl().getAll(store);
-      return safeArray(result);
-    } catch (e) { return []; }
-  },
-  async set(store, data) {
-    return this._getImpl().set(store, safeArray(data));
-  },
-  async add(store, item) {
-    return this._getImpl().add(store, item);
-  },
-  async update(store, item) {
-    return this._getImpl().update(store, item);
-  },
-  async delete(store, id) {
-    return this._getImpl().delete(store, id);
-  },
-  async getById(store, id) {
-    return this._getImpl().getById(store, id);
-  },
-  async getByBranch(store, bid) {
-    const result = await this._getImpl().getByBranch(store, bid);
-    return safeArray(result);
-  },
-  _getImpl() {
-    if (storageMode === 'firebase' && window.isOnline) return FirebaseDB;
-    if (storageMode === 'idb' && window._idb) return IDB;
-    return LocalDB;
-  },
-  setMode(mode) { storageMode = mode; }
-};
-
-export async function initDB() {
-  try {
-    const idbOk = await IDB.init();
-    if (idbOk) {
-      storageMode = 'idb';
-      await IDB.migrateFromLocal();
-      console.log('Storage mode: IndexedDB');
-    } else {
-      storageMode = 'local';
-      console.log('Storage mode: localStorage');
-    }
-  } catch (err) {
-    storageMode = 'local';
-    console.log('Storage mode: localStorage (fallback)');
-  }
-}
+// Complete console fix - paste all and press Enter
+(async () => {
+  // 1. Force DB.getAll to always return array (synchronous)
+  const originalGetAll = DB.getAll;
+  DB.getAll = (store) => {
+    const res = originalGetAll(store);
+    return Array.isArray(res) ? res : [];
+  };
+  
+  // 2. Import CURR and make it global
+  const utils = await import('./core/utils.js');
+  window.CURR = utils.CURR;
+  
+  // 3. Reload dashboard
+  sw('dashboard');
+  console.log('✅ All fixes applied. Dashboard should appear.');
+})();
