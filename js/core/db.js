@@ -1,17 +1,20 @@
-// Complete console fix - paste all and press Enter
-(async () => {
-  // 1. Force DB.getAll to always return array (synchronous)
-  const originalGetAll = DB.getAll;
-  DB.getAll = (store) => {
-    const res = originalGetAll(store);
-    return Array.isArray(res) ? res : [];
-  };
-  
-  // 2. Import CURR and make it global
-  const utils = await import('./core/utils.js');
-  window.CURR = utils.CURR;
-  
-  // 3. Reload dashboard
-  sw('dashboard');
-  console.log('✅ All fixes applied. Dashboard should appear.');
-})();
+// js/core/db.js (synchronous, no IndexedDB)
+import { LocalDB } from './localDB.js';
+
+export const DB = {
+  getAll(store) {
+    const result = LocalDB.getAll(store);
+    return Array.isArray(result) ? result : [];
+  },
+  set(store, data) { LocalDB.set(store, data); },
+  add(store, item) { return LocalDB.add(store, item); },
+  update(store, item) { LocalDB.update(store, item); },
+  delete(store, id) { LocalDB.delete(store, id); },
+  getById(store, id) { return LocalDB.getById(store, id); },
+  getByBranch(store, bid) {
+    const result = LocalDB.getByBranch(store, bid);
+    return Array.isArray(result) ? result : [];
+  }
+};
+
+export function initDB() { console.log('DB ready (sync)'); }
